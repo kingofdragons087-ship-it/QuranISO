@@ -29,8 +29,14 @@
         .qari-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 1.5rem; }
         .surah-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 0.8rem; }
         .hidden-page { display: none !important; }
-        .download-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.3rem 0.8rem; }
+        .download-btn, .fav-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 0.5rem; padding: 0.3rem 0.8rem; transition: all 0.2s; cursor: pointer; }
+        .download-btn:hover { background: rgba(212,175,55,0.2); }
+        .fav-btn:hover { background: rgba(239,68,68,0.2); }
+        #download-progress { transition: width 0.3s; }
         
+        #install-btn { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #0d1b2a; font-weight: bold; padding: 6px 16px; border-radius: 50px; box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4); transition: all 0.3s; display: none; align-items: center; gap: 6px; font-size: 13px; }
+        #install-btn:hover { transform: scale(1.05); }
+
         .player-green { background: rgba(34, 197, 94, 0.3); backdrop-filter: blur(20px); border-top: 2px solid rgba(34, 197, 94, 0.5); padding: 16px 24px; }
         .player-green #btn-play-pause { background: #ef4444; color: #ffffff; box-shadow: 0 0 25px rgba(239, 68, 68, 0.6); border: 2px solid rgba(255, 255, 255, 0.3); width: 60px; height: 60px; font-size: 1.6rem; }
         .player-green .control-btn { color: #ffffff; font-size: 1.6rem; padding: 0.6rem; background: rgba(0, 0, 0, 0.4); border-radius: 50%; }
@@ -46,23 +52,23 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.3); border-radius: 10px; }
 
-        /* ---- شريط تثبيت الآيفون الجديد ---- */
-        #ios-install-banner {
-            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-            z-index: 100; display: none; align-items: center; gap: 12px;
+        /* ---- شريط التوجيه المدمج (4 أسطر) ---- */
+        #ios-guide-banner {
+            display: none; flex-direction: column; gap: 6px;
             background: rgba(13, 27, 42, 0.95); backdrop-filter: blur(20px);
-            padding: 12px 20px; border-radius: 50px;
-            border: 1px solid rgba(251, 191, 36, 0.5);
-            box-shadow: 0 0 30px rgba(251, 191, 36, 0.2);
-            width: 90%; max-width: 450px;
+            border: 1px solid rgba(251, 191, 36, 0.4); border-radius: 16px;
+            padding: 12px 16px; margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
-        #ios-install-banner i { color: #fbbf24; font-size: 1.5rem; }
-        #ios-install-banner span { color: #fff; font-size: 0.9rem; font-weight: bold; flex: 1; }
-        #ios-install-banner button {
-            background: #fbbf24; color: #0d1b2a; border: none;
-            padding: 6px 14px; border-radius: 30px; font-weight: bold; font-size: 0.8rem; cursor: pointer;
+        #ios-guide-banner .title { color: #fcd34d; font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+        #ios-guide-banner .step { color: #e2e8f0; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+        #ios-guide-banner .step i { color: #fcd34d; width: 18px; text-align: center; font-size: 0.8rem; }
+        #ios-guide-banner .close-guide-btn {
+            align-self: flex-end; margin-top: 6px;
+            background: #fcd34d; color: #0d1b2a; border: none;
+            padding: 4px 16px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; cursor: pointer;
         }
-        #ios-install-banner button:hover { background: #fcd34d; }
+        #ios-guide-banner .close-guide-btn:hover { background: #fbbf24; }
     </style>
 </head>
 <body>
@@ -75,13 +81,6 @@
 
     <div id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toast-message">تم الحفظ بنجاح</span></div>
 
-    <!-- شريط تثبيت الآيفون الجديد -->
-    <div id="ios-install-banner">
-        <i class="fa-solid fa-mobile-screen-button"></i>
-        <span>ثبّت التطبيق على شاشتك الرئيسية</span>
-        <button onclick="showIosInstallGuide()">كيفية التثبيت</button>
-    </div>
-
     <div class="flex flex-col min-h-screen">
         <header class="glass-panel sticky top-0 z-40 px-4 py-3 flex items-center justify-between shadow-lg">
             <div class="flex items-center gap-3">
@@ -89,12 +88,23 @@
                 <h1 class="text-lg font-bold text-gold-500">القرآن الكريم</h1>
             </div>
             <div class="flex gap-2 items-center">
+                <button id="install-btn" onclick="installPWA()"><i class="fa-solid fa-download"></i> تثبيت</button>
                 <button onclick="goHome()" class="w-10 h-10 rounded-xl glass-card flex items-center justify-center text-gold-500"><i class="fa-solid fa-house"></i></button>
             </div>
         </header>
 
         <main class="flex-grow w-full max-w-7xl mx-auto px-4 pb-32" id="main-content">
             <div id="page-qari-grid">
+                
+                <!-- شريط التوجيه المدمج (يظهر فقط لمستخدمي الآيفون) -->
+                <div id="ios-guide-banner">
+                    <div class="title"><i class="fa-solid fa-mobile-screen"></i> كيف تثبت التطبيق على الآيفون؟</div>
+                    <div class="step"><i class="fa-solid fa-1"></i> اضغط على زر "المشاركة" (مربع مع سهم) في سفاري.</div>
+                    <div class="step"><i class="fa-solid fa-2"></i> اختر "إضافة إلى الشاشة الرئيسية".</div>
+                    <div class="step"><i class="fa-solid fa-3"></i> اضغط "إضافة" في الأعلى.</div>
+                    <button class="close-guide-btn" onclick="closeGuide()">تم، فهمت</button>
+                </div>
+
                 <div class="flex items-center justify-between mb-6"><h2 class="text-xl font-bold text-gold-500">اختر قارئك</h2><span class="text-xs text-slate-400">13 قارئًا</span></div>
                 <div class="qari-grid" id="qari-grid-container"></div>
             </div>
@@ -102,7 +112,16 @@
             <div id="page-surah-list" class="hidden-page">
                 <div class="flex items-center gap-4 mb-4 flex-wrap">
                     <img id="surah-qari-img" src="" class="w-16 h-16 rounded-2xl object-cover border-2 border-gold-500">
-                    <div><h2 id="surah-qari-name" class="text-xl font-bold surah-name"></h2><p class="text-sm text-slate-400">اختر سورة للاستماع</p></div>
+                    <div class="flex-grow"><h2 id="surah-qari-name" class="text-xl font-bold surah-name"></h2><p class="text-sm text-slate-400">اختر سورة للاستماع</p></div>
+                    <div class="flex gap-2">
+                        <button onclick="downloadQariFull()" class="download-btn text-xs" id="qari-download-btn"><i class="fa-solid fa-download"></i> تحميل القارئ</button>
+                        <button onclick="toggleFavoriteQari(currentQari.id)" class="fav-btn text-xs" id="qari-fav-btn"><i class="fa-regular fa-heart"></i> تفضيل</button>
+                        <span id="qari-storage-status" class="text-[10px] px-2 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 hidden"><i class="fa-solid fa-database"></i> محفوظ محليًا</span>
+                    </div>
+                </div>
+                <div id="download-progress-container" class="hidden mb-4">
+                    <div class="flex items-center justify-between text-xs text-slate-400 mb-1"><span id="download-progress-text">جاري التحميل...</span><span id="download-progress-percent">0%</span></div>
+                    <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden"><div id="download-progress" class="h-full bg-gold-500 rounded-full" style="width:0%"></div></div>
                 </div>
                 <input type="text" id="surah-search" oninput="filterSurahs()" placeholder="ابحث عن سورة..." class="w-full mb-4 p-3 bg-slate-900/50 border border-slate-700/50 rounded-2xl text-sm text-white">
                 <div class="surah-grid" id="surah-grid-container"></div>
@@ -114,28 +133,39 @@
                         <img id="player-qari-img" src="" class="w-12 h-12 rounded-xl object-cover border border-gold-500/30">
                         <div><h2 id="player-surah-name" class="text-lg font-bold surah-name"></h2><p id="player-qari-name" class="text-xs text-slate-400 qari-name"></p></div>
                     </div>
+                    <div class="flex gap-2">
+                        <button onclick="downloadCurrentSurah()" class="download-btn text-xs"><i class="fa-solid fa-download"></i> تحميل السورة</button>
+                        <button onclick="toggleFavoriteSurah()" class="fav-btn text-xs" id="surah-fav-btn"><i class="fa-regular fa-star"></i> تفضيل</button>
+                    </div>
                 </div>
                 <div id="player-verse-container" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2"></div>
             </div>
         </main>
 
         <footer class="fixed bottom-0 left-0 right-0 z-50 border-t border-green-500/40 shadow-2xl transition-all duration-500 translate-y-full player-green" id="floating-player">
-            <div class="max-w-7xl mx-auto flex items-center gap-4 justify-between">
-                <div class="flex items-center gap-3">
-                    <img id="player-cover" src="" class="w-12 h-12 rounded-xl object-cover border-2 border-white/20">
-                    <div><h4 id="player-title" class="text-sm font-bold text-white">سورة الفاتحة</h4><p id="player-subtitle" class="text-xs text-green-200">بصوت القارئ</p></div>
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-4 justify-between">
+                <div class="flex items-center gap-3 min-w-[130px]">
+                    <img id="player-cover" src="" class="w-12 h-12 rounded-xl object-cover border-2 border-white/20 shadow-lg">
+                    <div class="flex flex-col">
+                        <h4 id="player-title" class="text-sm font-bold truncate text-white drop-shadow-md">سورة الفاتحة</h4>
+                        <p id="player-subtitle" class="text-xs text-green-200 font-medium truncate">بصوت القارئ</p>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3 flex-1 justify-center">
+
+                <div class="flex items-center gap-5 flex-1 justify-center">
                     <button onclick="toggleShuffle()" id="btn-shuffle" class="control-btn"><i class="fa-solid fa-shuffle"></i></button>
                     <button onclick="playPrev()" class="control-btn"><i class="fa-solid fa-backward-step"></i></button>
-                    <button onclick="togglePlayPause()" id="btn-play-pause" class="rounded-full flex items-center justify-center"><i class="fa-solid fa-play" id="play-pause-icon"></i></button>
+                    <button onclick="togglePlayPause()" id="btn-play-pause" class="rounded-full flex items-center justify-center shadow-xl transition-all"><i class="fa-solid fa-play" id="play-pause-icon"></i></button>
                     <button onclick="playNext()" class="control-btn"><i class="fa-solid fa-forward-step"></i></button>
                     <button onclick="toggleRepeat()" id="btn-repeat" class="control-btn"><i class="fa-solid fa-repeat"></i></button>
                 </div>
-                <div class="flex items-center gap-2 text-xs font-bold text-white/80">
-                    <span id="player-time-current">00:00</span>
-                    <div class="progress-track flex-1" onclick="seekAudio(event)"><div class="progress-fill" id="progress-bar"></div></div>
-                    <span id="player-time-total">00:00</span>
+
+                <div class="flex items-center gap-2 text-xs font-bold text-white/80 min-w-[140px] justify-end">
+                    <span id="player-time-current" class="w-8 text-right">00:00</span>
+                    <div class="progress-track flex-1" onclick="seekAudio(event)">
+                        <div class="progress-fill" id="progress-bar"></div>
+                    </div>
+                    <span id="player-time-total" class="w-8">00:00</span>
                 </div>
             </div>
         </footer>
@@ -143,8 +173,8 @@
         <audio id="audio-engine" preload="auto" onended="handleAudioEnded()"></audio>
     </div>
 
-    <!-- ================= السكربت ================= -->
     <script>
+        // ---- بيانات القراء والسور ----
         const qariList = [
             { id: "afs", name: "مشاري العفاسي", img: "https://files.catbox.moe/x78lu5.jpeg", server: "server8" },
             { id: "wdee3", name: "وديع اليمني", img: "https://files.catbox.moe/10ejq9.jpeg", server: "server6" },
@@ -168,40 +198,73 @@
             surahList.push({ id: i, name: names[i] || `سورة ${i}`, verses: counts[i] || 7 });
         }
 
+        // ---- حالة التطبيق ----
         let currentQari = null, currentSurah = null, currentAyah = 1;
         let isPlaying = false, isBuffering = false, isShuffle = false, isRepeat = false;
         let ayahTimestamps = [], verseTexts = [];
+        let favoritesQari = JSON.parse(localStorage.getItem('favQari')) || [];
+        let favoritesSurah = JSON.parse(localStorage.getItem('favSurah')) || [];
         const audio = document.getElementById('audio-engine');
         const floatingPlayer = document.getElementById('floating-player');
 
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                document.getElementById('loading-screen').style.opacity = '0';
-                setTimeout(() => { document.getElementById('loading-screen').style.display = 'none'; }, 500);
-            }, 1000);
-            renderQariGrid();
-            setupAudioListeners();
-            checkForIOS();
-        });
+        // ---- قاعدة بيانات التخزين المحلي (IndexedDB) ----
+        const dbName = 'QuranOfflineDB';
+        const storeName = 'audioFiles';
+        let db;
 
-        function checkForIOS() {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            const isStandalone = window.navigator.standalone;
-            if (isIOS && !isStandalone) {
-                document.getElementById('ios-install-banner').style.display = 'flex';
-            }
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(storeName)) {
+                        db.createObjectStore(storeName, { keyPath: 'key' });
+                    }
+                };
+                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+                request.onerror = (e) => { reject(e.target.error); };
+            });
         }
 
-        function showIosInstallGuide() {
-            showToast('اضغط على زر المشاركة (مربع مع سهم) ثم اختر "إضافة إلى الشاشة الرئيسية"');
-            document.getElementById('ios-install-banner').style.display = 'none';
+        async function storeAudioFile(key, blob) {
+            if (!db) await openDB();
+            const tx = db.transaction(storeName, 'readwrite');
+            const store = tx.objectStore(storeName);
+            store.put({ key: key, blob: blob });
+            return new Promise((resolve, reject) => {
+                tx.oncomplete = () => resolve();
+                tx.onerror = (e) => reject(e.target.error);
+            });
         }
 
+        async function getAudioFile(key) {
+            if (!db) await openDB();
+            const tx = db.transaction(storeName, 'readonly');
+            const store = tx.objectStore(storeName);
+            const request = store.get(key);
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result ? request.result.blob : null);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function getAllStoredKeys() {
+            return new Promise((resolve, reject) => {
+                if (!db) { openDB().then(() => getAllStoredKeys()).then(resolve); return; }
+                const tx = db.transaction(storeName, 'readonly');
+                const store = tx.objectStore(storeName);
+                const request = store.getAllKeys();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        // ---- الدوال المساعدة ----
         function showToast(message) {
             document.getElementById('toast-message').textContent = message;
             document.getElementById('toast').classList.add('show');
             clearTimeout(document.getElementById('toast')._timer);
-            document.getElementById('toast')._timer = setTimeout(() => document.getElementById('toast').classList.remove('show'), 4000);
+            document.getElementById('toast')._timer = setTimeout(() => document.getElementById('toast').classList.remove('show'), 3000);
         }
 
         function showPage(pageId) {
@@ -211,18 +274,64 @@
 
         function goHome() {
             showPage('qari-grid');
-            if (!audio.paused) { audio.pause(); isPlaying = false; }
+            if (!audio.paused) { audio.pause(); isPlaying = false; updatePlayPauseUI(); }
             floatingPlayer.classList.add('translate-y-full');
             currentSurah = null;
         }
 
+        // ---- PWA Installation ----
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-btn').style.display = 'flex';
+        });
+
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const result = await deferredPrompt.userChoice;
+                if (result.outcome === 'accepted') {
+                    document.getElementById('install-btn').style.display = 'none';
+                    showToast('تم تثبيت التطبيق بنجاح!');
+                } else {
+                    showToast('تم إلغاء التثبيت');
+                }
+                deferredPrompt = null;
+            } else {
+                showToast('افتح الصفحة عبر Safari ثم اختر "إضافة إلى الشاشة الرئيسية"');
+            }
+        }
+
+        // ---- شريط التوجيه المدمج (للآيفون فقط) ----
+        function showGuideForIOS() {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isStandalone = window.navigator.standalone;
+            // إظهار الشريط فقط إذا كان آيفون ولم يثبت التطبيق بعد
+            if (isIOS && !isStandalone) {
+                document.getElementById('ios-guide-banner').style.display = 'flex';
+            }
+        }
+
+        function closeGuide() {
+            document.getElementById('ios-guide-banner').style.display = 'none';
+            // تخزين حالة الإغلاق في المتصفح (كي لا يظهر مجدداً لهذا المستخدم)
+            localStorage.setItem('ios_guide_closed', 'true');
+        }
+
+        // ---- واجهة القراء ----
         function renderQariGrid() {
             const container = document.getElementById('qari-grid-container');
             container.innerHTML = '';
             qariList.forEach(q => {
+                const isFav = favoritesQari.includes(q.id);
                 const card = document.createElement('div');
                 card.className = 'glass-card qari-card rounded-2xl p-4 flex flex-col items-center cursor-pointer relative';
-                card.innerHTML = `<img src="${q.img}" class="w-20 h-20 rounded-full object-cover border-2 border-gold-500/30 shadow-lg mb-2"><h4 class="text-sm font-bold text-center qari-name">${q.name}</h4>`;
+                card.innerHTML = `
+                    <img src="${q.img}" class="w-20 h-20 rounded-full object-cover border-2 border-gold-500/30 shadow-lg mb-2">
+                    <h4 class="text-sm font-bold text-center qari-name">${q.name}</h4>
+                    <div class="absolute top-2 right-2 text-xs">${isFav ? '<i class="fa-solid fa-heart text-red-500"></i>' : ''}</div>
+                `;
                 card.onclick = () => openSurahList(q.id);
                 container.appendChild(card);
             });
@@ -233,6 +342,20 @@
             currentQari = qariList.find(q => q.id === qariId);
             document.getElementById('surah-qari-img').src = currentQari.img;
             document.getElementById('surah-qari-name').textContent = currentQari.name;
+            updateQariFavButton();
+            const keyPrefix = `${currentQari.id}_`;
+            getAllStoredKeys().then(allKeys => {
+                const hasAllSurahs = allKeys.filter(k => k.startsWith(keyPrefix)).length >= 114;
+                if (hasAllSurahs) {
+                    document.getElementById('qari-storage-status').classList.remove('hidden');
+                    document.getElementById('qari-download-btn').innerHTML = '<i class="fa-solid fa-check"></i> محفوظ محليًا';
+                    document.getElementById('qari-download-btn').disabled = true;
+                } else {
+                    document.getElementById('qari-storage-status').classList.add('hidden');
+                    document.getElementById('qari-download-btn').innerHTML = '<i class="fa-solid fa-download"></i> تحميل القارئ (للاستخدام دون إنترنت)';
+                    document.getElementById('qari-download-btn').disabled = false;
+                }
+            });
             renderSurahGrid('');
             showPage('surah-list');
         }
@@ -242,9 +365,15 @@
             container.innerHTML = '';
             const list = filter ? surahList.filter(s => s.name.includes(filter)) : surahList;
             list.forEach(s => {
+                const isFav = favoritesSurah.includes(s.id);
                 const card = document.createElement('div');
                 card.className = 'glass-card rounded-xl p-3 text-center cursor-pointer hover:bg-gold-500/10 relative';
-                card.innerHTML = `<div class="text-xs text-gold-500 font-bold">${s.id}</div><div class="text-sm font-bold surah-name">${s.name}</div><div class="text-[10px] text-slate-400">${s.verses} آية</div>`;
+                card.innerHTML = `
+                    <div class="text-xs text-gold-500 font-bold">${s.id}</div>
+                    <div class="text-sm font-bold surah-name">${s.name}</div>
+                    <div class="text-[10px] text-slate-400">${s.verses} آية</div>
+                    <div class="absolute top-1 right-1 text-[10px]">${isFav ? '<i class="fa-solid fa-star text-yellow-400"></i>' : ''}</div>
+                `;
                 card.onclick = () => openPlayer(s.id);
                 container.appendChild(card);
             });
@@ -254,12 +383,14 @@
             renderSurahGrid(document.getElementById('surah-search').value.trim());
         }
 
+        // ---- واجهة المشغل ----
         async function openPlayer(surahId) {
             currentSurah = surahList.find(s => s.id === surahId);
             currentAyah = 1;
             document.getElementById('player-qari-img').src = currentQari.img;
             document.getElementById('player-qari-name').textContent = currentQari.name;
             document.getElementById('player-surah-name').textContent = `سورة ${currentSurah.name}`;
+            updateSurahFavButton();
             showPage('player');
             await loadVerseTexts(currentSurah.id);
             renderVerses();
@@ -278,8 +409,6 @@
             } catch (e) { verseTexts = Array(getVerseCount(surahId)).fill('نص الآية غير متوفر'); }
         }
 
-        function getVerseCount(id) { return surahList.find(s => s.id === id).verses; }
-
         function renderVerses() {
             const container = document.getElementById('player-verse-container');
             container.innerHTML = '';
@@ -287,7 +416,12 @@
                 const div = document.createElement('div');
                 div.className = `verse-container`;
                 div.id = `verse-${i+1}`;
-                div.innerHTML = `<div class="flex items-start gap-2"><span class="ayah-number text-xs font-bold w-6">${i+1}</span><span class="verse-text text-base font-amiri">${verseTexts[i] || '...'}</span></div>`;
+                div.innerHTML = `
+                    <div class="flex items-start gap-2">
+                        <span class="ayah-number text-xs font-bold w-6">${i+1}</span>
+                        <span class="verse-text text-base font-amiri" style="font-family: 'Amiri', serif;">${verseTexts[i] || '...'}</span>
+                    </div>
+                `;
                 container.appendChild(div);
             }
             highlightVerse(1);
@@ -309,7 +443,14 @@
         }
 
         async function playSurahAudio(surahId) {
-            const url = getAudioUrl(currentQari, surahId);
+            const key = `${currentQari.id}_${surahId}`;
+            const blob = await getAudioFile(key);
+            let url;
+            if (blob) {
+                url = URL.createObjectURL(blob);
+            } else {
+                url = getAudioUrl(currentQari, surahId);
+            }
             audio.src = url;
             floatingPlayer.classList.remove('translate-y-full');
             document.getElementById('player-cover').src = currentQari.img;
@@ -327,17 +468,25 @@
 
         function playNext() {
             if (!currentSurah) return;
-            let nextId = isShuffle ? Math.floor(Math.random() * 114) + 1 : (currentSurah.id + 1 > 114 ? 1 : currentSurah.id + 1);
-            currentAyah = 1; openPlayer(nextId);
+            let nextId = currentSurah.id + 1;
+            if (isShuffle) nextId = Math.floor(Math.random() * 114) + 1;
+            else if (nextId > 114) nextId = 1;
+            currentAyah = 1;
+            openPlayer(nextId);
         }
 
         function playPrev() {
             if (!currentSurah) return;
-            let prevId = currentSurah.id - 1 < 1 ? 114 : currentSurah.id - 1;
-            currentAyah = 1; openPlayer(prevId);
+            let prevId = currentSurah.id - 1;
+            if (prevId < 1) prevId = 114;
+            currentAyah = 1;
+            openPlayer(prevId);
         }
 
-        function handleAudioEnded() { if (isRepeat) { audio.currentTime = 0; audio.play(); } else playNext(); }
+        function handleAudioEnded() {
+            if (isRepeat) { audio.currentTime = 0; audio.play(); }
+            else playNext();
+        }
 
         function updatePlayPauseUI() {
             const icon = document.getElementById('play-pause-icon');
@@ -346,24 +495,157 @@
             else icon.className = 'fa-solid fa-play';
         }
 
+        function seekAudio(e) {
+            if (!audio.duration) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const pct = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = pct * audio.duration;
+        }
+
+        function formatTime(sec) {
+            if (isNaN(sec)) return '00:00';
+            const m = Math.floor(sec/60), s = Math.floor(sec%60);
+            return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
         function setupAudioListeners() {
+            audio.addEventListener('waiting', () => { isBuffering = true; updatePlayPauseUI(); });
+            audio.addEventListener('playing', () => { isBuffering = false; isPlaying = true; updatePlayPauseUI(); });
+            audio.addEventListener('pause', () => { isPlaying = false; updatePlayPauseUI(); });
             audio.addEventListener('timeupdate', () => {
                 if (!audio.duration) return;
                 document.getElementById('progress-bar').style.width = (audio.currentTime / audio.duration) * 100 + '%';
                 document.getElementById('player-time-current').textContent = formatTime(audio.currentTime);
                 document.getElementById('player-time-total').textContent = formatTime(audio.duration);
             });
+            audio.addEventListener('loadedmetadata', () => {
+                document.getElementById('player-time-total').textContent = formatTime(audio.duration);
+            });
+            audio.addEventListener('error', () => { isBuffering = false; isPlaying = false; updatePlayPauseUI(); });
         }
 
-        function seekAudio(e) {
-            if (!audio.duration) return;
-            const rect = e.currentTarget.getBoundingClientRect();
-            audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
+        // ---- دوال التحميل والتخزين ----
+        async function downloadCurrentSurah() {
+            if (!currentSurah || !currentQari) return;
+            const key = `${currentQari.id}_${currentSurah.id}`;
+            const existing = await getAudioFile(key);
+            if (existing) { showToast('هذه السورة محفوظة بالفعل محليًا.'); return; }
+            const url = getAudioUrl(currentQari, currentSurah.id);
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error('فشل التحميل');
+                const blob = await resp.blob();
+                await storeAudioFile(key, blob);
+                showToast('تم تحميل السورة وحفظها محليًا بنجاح.');
+            } catch (e) { showToast('فشل التحميل، تحقق من الاتصال.'); }
         }
 
-        function formatTime(sec) { if (isNaN(sec)) return '00:00'; const m = Math.floor(sec/60), s = Math.floor(sec%60); return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
-        function toggleShuffle() { isShuffle = !isShuffle; document.getElementById('btn-shuffle').className = 'control-btn' + (isShuffle ? ' text-yellow-400' : ''); }
-        function toggleRepeat() { isRepeat = !isRepeat; document.getElementById('btn-repeat').className = 'control-btn' + (isRepeat ? ' text-yellow-400' : ''); }
+        async function downloadQariFull() {
+            if (!currentQari) return;
+            const btn = document.getElementById('qari-download-btn');
+            const progressContainer = document.getElementById('download-progress-container');
+            const progressBar = document.getElementById('download-progress');
+            const progressText = document.getElementById('download-progress-text');
+            const progressPercent = document.getElementById('download-progress-percent');
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> جاري التحميل...';
+            btn.disabled = true;
+            progressContainer.classList.remove('hidden');
+
+            try {
+                for (let i = 1; i <= 114; i++) {
+                    const key = `${currentQari.id}_${i}`;
+                    const existing = await getAudioFile(key);
+                    if (!existing) {
+                        const url = getAudioUrl(currentQari, i);
+                        const resp = await fetch(url);
+                        if (!resp.ok) throw new Error(`فشل تحميل السورة ${i}`);
+                        const blob = await resp.blob();
+                        await storeAudioFile(key, blob);
+                    }
+                    const pct = Math.round((i / 114) * 100);
+                    progressBar.style.width = pct + '%';
+                    progressText.textContent = `جاري تحميل السورة ${i} من 114...`;
+                    progressPercent.textContent = pct + '%';
+                    await new Promise(r => setTimeout(r, 10));
+                }
+                progressText.textContent = 'اكتمل التحميل!';
+                progressPercent.textContent = '100%';
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> محفوظ محليًا';
+                document.getElementById('qari-storage-status').classList.remove('hidden');
+                btn.disabled = true;
+                showToast('تم تحميل جميع سور القارئ وحفظها محليًا.');
+                setTimeout(() => progressContainer.classList.add('hidden'), 2000);
+            } catch (e) {
+                btn.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i> فشل التحميل';
+                btn.disabled = false;
+                progressContainer.classList.add('hidden');
+                showToast('حدث خطأ أثناء التحميل، حاول مرة أخرى.');
+            }
+        }
+
+        // ---- دوال المفضلة ----
+        function toggleFavoriteQari(qariId) {
+            const idx = favoritesQari.indexOf(qariId);
+            if (idx > -1) favoritesQari.splice(idx, 1);
+            else favoritesQari.push(qariId);
+            localStorage.setItem('favQari', JSON.stringify(favoritesQari));
+            renderQariGrid();
+            updateQariFavButton();
+        }
+
+        function toggleFavoriteSurah() {
+            if (!currentSurah) return;
+            const id = currentSurah.id;
+            const idx = favoritesSurah.indexOf(id);
+            if (idx > -1) favoritesSurah.splice(idx, 1);
+            else favoritesSurah.push(id);
+            localStorage.setItem('favSurah', JSON.stringify(favoritesSurah));
+            updateSurahFavButton();
+        }
+
+        function updateQariFavButton() {
+            const btn = document.getElementById('qari-fav-btn');
+            if (favoritesQari.includes(currentQari.id)) {
+                btn.innerHTML = '<i class="fa-solid fa-heart text-red-500"></i> تفضيل';
+            } else {
+                btn.innerHTML = '<i class="fa-regular fa-heart"></i> تفضيل';
+            }
+        }
+
+        function updateSurahFavButton() {
+            const btn = document.getElementById('surah-fav-btn');
+            if (favoritesSurah.includes(currentSurah.id)) {
+                btn.innerHTML = '<i class="fa-solid fa-star text-yellow-400"></i> تفضيل';
+            } else {
+                btn.innerHTML = '<i class="fa-regular fa-star"></i> تفضيل';
+            }
+        }
+
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            document.getElementById('btn-shuffle').className = 'control-btn' + (isShuffle ? ' text-yellow-400' : '');
+        }
+
+        function toggleRepeat() {
+            isRepeat = !isRepeat;
+            document.getElementById('btn-repeat').className = 'control-btn' + (isRepeat ? ' text-yellow-400' : '');
+        }
+
+        // ---- بدء التشغيل ----
+        window.addEventListener('load', async () => {
+            await openDB();
+            renderQariGrid();
+            setupAudioListeners();
+            // إظهار شريط التوجيه للآيفون فقط إذا لم يغلقه المستخدم سابقاً
+            if (!localStorage.getItem('ios_guide_closed')) {
+                showGuideForIOS();
+            }
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.opacity = '0';
+                setTimeout(() => { document.getElementById('loading-screen').style.display = 'none'; }, 500);
+            }, 1000);
+        });
     </script>
 </body>
-    </html>
+</html>
