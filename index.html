@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>القرآن الكريم - PWA</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="القرآن الكريم">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://files.catbox.moe/i5fnb8.jpg">
+    
+    <!-- نفس الـ CSS السابق -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Tajawal&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* نفس الستايلات السابقة */
+        body { font-family: 'Tajawal', sans-serif; }
+        .app-bg {
+            background: radial-gradient(ellipse at 50% 0%, #0d1b2a 0%, #0b1320 30%, #000000 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            transition: background 0.5s ease;
+        }
+        .app-bg::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: radial-gradient(2px 2px at 20px 30px, #fbbf24, transparent);
+            background-size: 550px 200px;
+            opacity: 0.7;
+            pointer-events: none;
+            z-index: 0;
+        }
+        /* باقي الستايلات من الكود الأصلي... */
+        /* إضافة زر التثبيت */
+        #install-btn {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #0d1b2a;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(251, 191, 36, 0.4);
+            transition: all 0.3s;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+        #install-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 30px rgba(251, 191, 36, 0.6);
+        }
+        #install-btn i {
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body class="app-bg text-slate-100 min-h-screen relative overflow-x-hidden">
+    
+    <!-- إضافة زر التثبيت في الشريط العلوي -->
+    <header class="glass-panel sticky top-0 z-50 px-4 py-3 md:px-8 flex items-center justify-between shadow-lg">
+        <div class="flex items-center gap-3">
+            <img src="https://files.catbox.moe/i5fnb8.jpg" class="w-10 h-10 rounded-xl object-cover shadow-md">
+            <h1 class="text-lg md:text-xl font-bold bg-gradient-to-l from-gold-500 to-amber-300 bg-clip-text text-transparent">القرآن الكريم</h1>
+        </div>
+        <div class="flex gap-2 items-center">
+            <!-- زر تثبيت التطبيق -->
+            <button id="install-btn" onclick="installPWA()">
+                <i class="fa-solid fa-download"></i> تثبيت التطبيق
+            </button>
+            <button onclick="toggleTheme()" class="w-10 h-10 rounded-xl glass-card flex items-center justify-center text-gold-500"><i class="fa-solid fa-moon" id="theme-icon"></i></button>
+            <button onclick="goHome()" class="w-10 h-10 rounded-xl glass-card flex items-center justify-center text-gold-500"><i class="fa-solid fa-house"></i></button>
+        </div>
+    </header>
+
+    <!-- باقي المحتوى كما هو -->
+    <!-- ... (جميع الأقسام السابقة) ... -->
+
+    <!-- إضافة السكربتات -->
+    <script>
+        // ---- PWA Installation ----
+        let deferredPrompt = null;
+
+        // عند تحميل الصفحة
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // إظهار زر التثبيت إذا كان المتصفح يدعمه
+            document.getElementById('install-btn').style.display = 'flex';
+        });
+
+        // عند تثبيت التطبيق
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const result = await deferredPrompt.userChoice;
+                if (result.outcome === 'accepted') {
+                    document.getElementById('install-btn').style.display = 'none';
+                    showToast('تم تثبيت التطبيق بنجاح!');
+                } else {
+                    showToast('تم إلغاء التثبيت');
+                }
+                deferredPrompt = null;
+            } else {
+                // إذا لم يظهر الزر (يعني المتصفح لا يدعم)
+                showToast('افتح الصفحة عبر Safari ثم اختر "إضافة إلى الشاشة الرئيسية"');
+            }
+        }
+
+        // كشف التثبيت عبر Safari (آيفون)
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('install-btn').style.display = 'none';
+            showToast('تم تثبيت التطبيق!');
+        });
+
+        // ---- باقي السكربتات السابقة ----
+        // (نفس الكود السابق: القراء، السور، المشغل، إلخ)
+    </script>
+</body>
+</html>
